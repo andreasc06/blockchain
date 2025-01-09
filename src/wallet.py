@@ -1,10 +1,13 @@
-from ecdsa import SigningKey, VerifyingKey, SECP256k1
+from ecdsa import SigningKey, SECP256k1
 import base58
 import hashlib
 
+from src.network import Network
+from src.trx.trx import Trx
+
 class Wallet():
 
-    def __init__(self, pk : str = None):
+    def __init__(self, network : Network, pk : str = None):
 
         self.sk_raw = None
         self.pk_raw = None
@@ -12,6 +15,8 @@ class Wallet():
 
         self.sk_hex = None
         self.pk_hex = None
+
+        self.network = network
 
         self.import_key(pk) if pk != None else self.create_key()
 
@@ -49,11 +54,12 @@ class Wallet():
         address_bytes = versioned_payload + checksum
 
         address = base58.b58encode(address_bytes).decode('utf-8')
+
         return address
 
     def sign_transaction(self, sk : SigningKey, trx_data):
 
-        byte_data = trx_data.encode('utf-8')  # Encoding data to bytes
+        byte_data = str(trx_data).encode('utf-8')  # Encoding data to bytes
 
         tx_hash = hashlib.sha256(byte_data).digest()
 
@@ -61,24 +67,12 @@ class Wallet():
 
         return signature
 
-    def verify_transaction(self, pk : VerifyingKey, trx_data, signature):
+    def send_transaction(self, rec_adr, amount):
 
-        # Will be moves in the futures cause validations dosent happen in wallet.
+        trx_data = Trx(self.address, amount, rec_adr)
 
-        byte_data = trx_data.encode('utf-8')  # Encoding data to bytes
-        tx_hash = hashlib.sha256(byte_data).digest()
+        signature = self.sign_transaction(self.sk_raw, trx_data)
 
-        try:
-            return pk.verify(signature, tx_hash)
-        except:
-            return False
+        self.network.trx_broadcast([self.pk_raw, trx_data, signature])
 
-
-
-wallet = Wallet()
-
-
-print("Your private key:", wallet.sk_hex)
-print("Your public key:", wallet.pk_hex)
-print("Your address:", wallet.address)
 
