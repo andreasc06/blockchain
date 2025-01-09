@@ -2,7 +2,7 @@ from src.block import Block
 from src.network import Network
 from src.wallet import Wallet
 from src.node import Node
-from adr import *
+from src.wallets.adr_database import *
 
 from src.miner import mine_block
 
