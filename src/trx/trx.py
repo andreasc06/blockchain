@@ -1,13 +1,26 @@
-# Transaction Object for where there is a sender and reciver
+"""
+Takes in a input of as list UTXOs and outputs of new UTXOs
+
+used for normal transactions
+
+"""
 
 class Trx:
 
-    def __init__(self, from_adr, amount, rec_adr):
+    def __init__(self, input, output):
 
-        self.from_adr = from_adr
-        self.amount = amount
-        self.rec_adr = rec_adr
+        self.input = input
+        self.output = output
 
+    def _input_string(self):
+
+        return [f"{str(item)}" for item in self.input]
+
+
+    def _output_string(self):
+
+        return [f"{str(item)}" for item in self.output]
+        
     def __str__(self):
         
-        return f"{self.from_adr}:{self.amount}:{self.rec_adr}"
+        return f"{self.input}:{self.output}"
