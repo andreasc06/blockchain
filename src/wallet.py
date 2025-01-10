@@ -1,9 +1,13 @@
-from ecdsa import SigningKey, SECP256k1
-import base58
-import hashlib
-
 from src.network import Network
 from src.trx.trx import Trx
+from src.trx.utxo import Utxo
+from src.wallets.adr_database import ADDRESS_A
+
+from src.util.crypto_util import get_address, serialize_trx
+
+from ecdsa import SigningKey, SECP256k1
+import hashlib
+
 
 class Wallet():
 
@@ -18,13 +22,14 @@ class Wallet():
 
         self.network = network
 
+        self.utxos = []
+
         self.import_key(pk) if pk != None else self.create_key()
 
     def import_key(self, sk):
 
         self.sk_raw = SigningKey.from_string(bytes.fromhex(sk), curve=SECP256k1)
         self.create_wallet(self.sk_raw)
-
 
     def create_key(self):
 
@@ -35,43 +40,32 @@ class Wallet():
     def create_wallet(self, sk : SigningKey):
 
         self.pk_raw = sk.get_verifying_key()
-        self.address = self.get_address(self.pk_raw.to_string())
+        self.address = get_address(self.pk_raw)
 
         self.sk_hex = self.sk_raw.to_string().hex()
         self.pk_hex = self.pk_raw.to_string().hex()
 
-    def get_address(self, pk : str):
-
-        sha256_hash = hashlib.sha256(pk).digest()
-        ripemd160 = hashlib.new('ripemd160')
-        ripemd160.update(sha256_hash)
-        public_key_hash = ripemd160.digest()
-
-        versioned_payload = b'\x00' + public_key_hash
-
-        checksum = hashlib.sha256(hashlib.sha256(versioned_payload).digest()).digest()[:4]
-
-        address_bytes = versioned_payload + checksum
-
-        address = base58.b58encode(address_bytes).decode('utf-8')
-
-        return address
 
     def sign_transaction(self, sk : SigningKey, trx_data):
 
-        byte_data = str(trx_data).encode('utf-8')  # Encoding data to bytes
+        byte_data = trx_data.encode('utf-8')  # Encoding data to bytes
 
         tx_hash = hashlib.sha256(byte_data).digest()
 
         signature = sk.sign(tx_hash)
 
         return signature
+    
 
     def send_transaction(self, rec_adr, amount):
 
-        trx_data = Trx(self.address, amount, rec_adr)
+        input_utxo = [Utxo(amount, self.address), Utxo(amount, self.address)]
+        output_utxo = [Utxo(amount, rec_adr)]
+        trx_data = Trx(input_utxo, output_utxo)
 
-        signature = self.sign_transaction(self.sk_raw, trx_data)
+        sig_data = serialize_trx(trx_data)
+
+        signature = self.sign_transaction(self.sk_raw, sig_data)
 
         self.network.trx_broadcast([self.pk_raw, trx_data, signature])
 
