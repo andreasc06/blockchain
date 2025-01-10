@@ -1,7 +1,11 @@
 from src.network import Network
+
+from src.util.crypto_util import get_address, serialize_trx
+
 from ecdsa import VerifyingKey
+
 import hashlib
-import base58
+
 
 class Node:
 
@@ -11,10 +15,22 @@ class Node:
 
         self.blockchain = []
         self.mempool = []
+
+        self.utxo_pool = []
+
+
+    def assign_utxos(self):
+
+        for block in self.blockchain:
+
+            for trx in block.trx:
+
+                self.utxo_pool.append(trx)
+
   
     def verify_transaction(self, pk : VerifyingKey, trx_data, signature):
 
-        byte_data = str(trx_data).encode('utf-8')  # Encoding data to bytes
+        byte_data = (trx_data).encode('utf-8')  # Encoding data to bytes
         tx_hash = hashlib.sha256(byte_data).digest()
 
         try:
@@ -22,21 +38,17 @@ class Node:
         except:
             return False
         
-    def verify_address(self, pk : VerifyingKey, target_address):
+        
+    def verify_address(self, inputs, target_adr):
 
-        pk_string = pk.to_string()
+        for input in inputs:
 
-        sha256_hash = hashlib.sha256(pk_string).digest()
-        ripemd160 = hashlib.new('ripemd160')
-        ripemd160.update(sha256_hash)
-        public_key_hash = ripemd160.digest()
-        versioned_payload = b'\x00' + public_key_hash
-        checksum = hashlib.sha256(hashlib.sha256(versioned_payload).digest()).digest()[:4]
-        address_bytes = versioned_payload + checksum
+            if input.assigned_adr != target_adr:
 
-        address = base58.b58encode(address_bytes).decode('utf-8')
-
-        return True if address == target_address else False
+                return False
+            
+        return True
+    
 
     def listen_and_verify_broadcast(self):
 
@@ -46,10 +58,13 @@ class Node:
             trx_data = trx[1]
             signature = trx[2]
 
-            from_adr = str(trx_data).split(':')[0]
+            from_adr = get_address(pk)
+   
+            sig_data = serialize_trx(trx_data)
 
-            if self.verify_transaction(pk, trx_data, signature) and self.verify_address(pk, from_adr):
 
-                self.mempool.append(trx)
+            if self.verify_transaction(pk, sig_data, signature) and self.verify_address(trx_data.input, from_adr):
 
-        
+                self.mempool.append(trx_data)
+                print("verified")
+
