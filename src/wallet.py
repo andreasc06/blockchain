@@ -1,4 +1,5 @@
 from src.network import Network
+from src.node import Node
 from src.trx.trx import Trx
 from src.trx.utxo import Utxo
 from src.wallets.adr_database import ADDRESS_A
@@ -11,7 +12,7 @@ import hashlib
 
 class Wallet():
 
-    def __init__(self, network : Network, pk : str = None):
+    def __init__(self, network : Network, node : Node, sk : str = None):
 
         self.sk_raw = None
         self.pk_raw = None
@@ -24,7 +25,18 @@ class Wallet():
 
         self.utxos = []
 
-        self.import_key(pk) if pk != None else self.create_key()
+        self.node = node
+
+        self.import_key(sk) if sk != None else self.create_key()
+        self.get_utxos()
+
+    def get_utxos(self):
+
+        for utxo in self.node.utxo_pool:
+
+            if utxo.assigned_adr == self.address:
+
+                self.utxos.append(utxo)
 
     def import_key(self, sk):
 
@@ -58,8 +70,8 @@ class Wallet():
     
 
     def send_transaction(self, rec_adr, amount):
-
-        input_utxo = [Utxo(amount, self.address), Utxo(amount, self.address)]
+        # ! TESTING PURPOSES ! force uses the UTXO given in genesis block to ADDRESS A -> TRX will only be accepted if its from Wallet A and the sending amount is 50
+        input_utxo = [self.utxos[0]]
         output_utxo = [Utxo(amount, rec_adr)]
         trx_data = Trx(input_utxo, output_utxo)
 
