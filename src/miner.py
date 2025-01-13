@@ -1,27 +1,31 @@
 import hashlib
 import random
 
-def mine_block(trx, prev_hash, dif):
+from src.network import Network
+from src.node import Node
 
-    target = "0" * dif
-    nonce = 0
 
-    tries = 0
-    
-    while True:
+class Miner:
 
-        nonce = random.randint(0, 4294967295)
-        block_data = f"{prev_hash}{trx}{nonce}"
+    def __init__(self, network : Network, node : Node):
 
-        hashed_nonce = hashlib.sha256(block_data.encode()).hexdigest()
-        print(hashed_nonce)
+        self.node = node
+        self.network = network
 
-        tries += 1
 
-        if hashed_nonce.startswith(target):
+    def mine_block(self, trx, prev_hash):
 
-            print(tries)
-
-            return nonce
+        target = "0" * self.network.dif
+        nonce = 0
         
-            
+        while True:
+
+            nonce = random.randint(0, 4294967295)
+            block_data = f"{prev_hash}{trx}{nonce}"
+
+            hashed_nonce = hashlib.sha256(block_data.encode()).hexdigest()
+            print(hashed_nonce)
+
+            if hashed_nonce.startswith(target):
+
+                return nonce
