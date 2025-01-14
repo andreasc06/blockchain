@@ -66,55 +66,67 @@ class Node:
             sig_data = serialize_trx(trx_data)
 
 
-            if self.verify_transaction(pk, sig_data, signature) and self.verify_address(trx_data.input, from_adr):
+            if self.verify_transaction(pk, sig_data, signature) and self.verify_address(trx_data.input, from_adr) and self.valid_trx(trx_data):
 
                 self.mempool.append(trx_data)
                 print("BROADCASTED TRX VERIFIED")
+            else:
+                print("TRX: ", trx_data, "rejeted...")
 
     def listen_and_verify_block_broadcast(self):
 
         for block in self.network.broadcasted_blocks:
 
-            if self.verify_hash(block) and self.verify_trx(block) and block not in self.blockchain:
+            if self.valid_hash(block) and self.valid_trx_in_block(block) and block not in self.blockchain:
 
                 print("BROADCASTED BLOCK VERIFIED")
                 self.blockchain.append(block)
 
-    def verify_hash(self, block : Block):
+    def valid_hash(self, block : Block):
 
         if block.calculate_block_hash().startswith("0" * self.network.dif):
 
-            print("BLOCK HASH VERIFIED")
+            print("valid hash.....")
             return True
+        else:
+            print("invalid block hash.....")
+            return False   
         
-    def verify_trx(self, block : Block):
+    def valid_trx(self, trx):
+
+
+        input_sum = 0
+        output_sum = 0
+        input_utxos = []
+
+        for input in trx.input:
+
+            input_utxos.append(input)
+            input_sum += input.amount
+
+        for output in trx.output:
+
+            output_sum += output.amount
+
+
+        UTXO_IN_POOL = all(input in self.utxo_pool for input in input_utxos)
+
+        return True if (input_sum == output_sum) and UTXO_IN_POOL else False
+            
+        
+    def valid_trx_in_block(self, block : Block):
+
+        trx_index = 0
 
         for trx in block.trx:
 
-            trx_index = 1
-            input_utxos = []
-            input_sum = 0
-            output_sum = 0
+            IS_COINBASE_TRX = (trx.input[0].assigned_adr == "COINBASE") and trx_index == 0
 
-            for input in trx.input:
-
-                input_utxos.append(input)
-                input_sum += input.amount
-
-            for output in trx.output:
-
-                output_sum += output.amount
-
-            UTXO_IN_POOL = all(input in self.utxo_pool for input in input_utxos[1:])
-            IS_COINBASE_BLOCK = (input_utxos[0].assigned_adr == "COINBASE" and input_utxos[0].amount == self.network.block_reward and trx_index == 1)
-
-            if not ((input_sum == output_sum) and (UTXO_IN_POOL or IS_COINBASE_BLOCK)):
-
+            if not self.valid_trx(trx) and not IS_COINBASE_TRX:
+                print("invalid trx in block.....")
                 return False
-
-            trx_index += 1
-
-        print("TRX IN BLOCK VERIFIED")
+            
+        print("valid trx in block.....")
         return True
 
             
