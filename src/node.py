@@ -30,6 +30,20 @@ class Node:
 
                     self.utxo_pool.append(output)
 
+    def update_utxos(self):
+
+        for trx in self.blockchain[-1].trx:
+
+            for input in trx.input:
+
+                if input.assigned_adr != "COINBASE":
+
+                    self.utxo_pool.remove(input)
+
+            for output in trx.output:
+
+                self.utxo_pool.append(output)
+
   
     def verify_transaction(self, pk : VerifyingKey, trx_data, signature):
 
@@ -79,8 +93,9 @@ class Node:
 
             if self.valid_hash(block) and self.valid_trx_in_block(block) and block not in self.blockchain:
 
-                print("BROADCASTED BLOCK VERIFIED")
+                print("BROADCASTED BLOCK VERIFIED AND ADDED TO CHAIN")
                 self.blockchain.append(block)
+                self.update_utxos()
 
     def valid_hash(self, block : Block):
 
