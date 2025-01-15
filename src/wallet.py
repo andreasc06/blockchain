@@ -8,6 +8,7 @@ from src.util.crypto_util import get_address, serialize_trx
 
 from ecdsa import SigningKey, SECP256k1
 import hashlib
+import itertools
 
 
 class Wallet():
@@ -31,6 +32,8 @@ class Wallet():
         self.get_utxos()
 
     def get_utxos(self):
+
+        self.utxos = []
 
         for utxo in self.node.utxo_pool:
 
@@ -69,10 +72,12 @@ class Wallet():
         return signature
     
 
-    def send_transaction(self, rec_adr, amount):
-        # ! TESTING PURPOSES ! force uses the UTXO given in genesis block to ADDRESS A -> TRX will only be accepted if its from Wallet A and the sending amount is 50
-        input_utxo = [self.utxos[0]]
-        output_utxo = [Utxo(amount, rec_adr)]
+    def send_transaction(self, rec_adr, amount, utxos):
+
+        input_amount = sum(utxo.amount for utxo in utxos)
+
+        input_utxo = utxos
+        output_utxo = [Utxo(amount, rec_adr), Utxo(input_amount - amount, self.address)]
         trx_data = Trx(input_utxo, output_utxo)
 
         sig_data = serialize_trx(trx_data)
