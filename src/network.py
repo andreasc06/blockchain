@@ -19,3 +19,10 @@ class Network:
 
         self.broadcasted_blocks.append(block)
 
+    def clear_network(self):
+        """called when block is mined. just makes things easier"""
+
+        self.broadcasted_trx = []
+        self.broadcasted_blocks = []
+
+
