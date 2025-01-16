@@ -31,6 +31,16 @@ class Wallet():
         self.import_key(sk) if sk != None else self.create_key()
         self.get_utxos()
 
+    def get_balance(self):
+
+        balance = 0
+
+        for utxo in self.utxos:
+            
+            balance += utxo.amount
+
+        return balance
+    
     def get_utxos(self):
 
         self.utxos = []
