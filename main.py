@@ -43,7 +43,7 @@ for utxo in node.utxo_pool:
 
 print("\nSending 60 to", ADDRESS_B, "form", ADDRESS_A)
 
-wallet.send_transaction(ADDRESS_B, 60, [Utxo(50, wallet.address), Utxo(30, wallet.address)])
+wallet.send_transaction(ADDRESS_B, 80, [Utxo(50, wallet.address), Utxo(30, wallet.address)])
 node.listen_and_verify_trx_broadcast()
 network.clear_network()
 
