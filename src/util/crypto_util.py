@@ -34,3 +34,36 @@ def get_address(pk : VerifyingKey):
     address = base58.b58encode(address_bytes).decode('utf-8')
 
     return address
+
+def parse_transaction_data(transaction_data: str):
+    # Split into input and output sections
+    try:
+        inputs_section, outputs_section = transaction_data.split("]:[")
+    except ValueError:
+        raise ValueError("Invalid transaction data format. Ensure it contains inputs and outputs.")
+
+    # Helper function to process each section
+    def process_section(section, section_type):
+        # Clean the brackets and split items
+        items = section.strip("[]").split("', '")
+        parsed_items = []
+        for item in items:
+            try:
+                # Extract the type, amount, and address
+                prefix, value = item.split(", ", 1)
+                amount, address = value.split(":")
+                parsed_items.append({
+                    "Type": section_type,
+                    "Amount": int(amount),
+                    "Address": address
+                })
+            except ValueError:
+                raise ValueError(f"Unexpected format for item: {item}")
+        return parsed_items
+
+    # Process inputs and outputs
+    inputs = process_section(inputs_section.strip("'"), "Input")
+    outputs = process_section(outputs_section.strip("'"), "Output")
+
+    # Combine the results
+    return inputs + outputs
