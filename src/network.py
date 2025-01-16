@@ -8,7 +8,7 @@ class Network:
         self.broadcasted_trx = []
         self.broadcasted_blocks = []
 
-        self.dif = 1
+        self.dif = 4
         self.block_reward = 100
 
     def trx_broadcast(self, trx_data : list):
