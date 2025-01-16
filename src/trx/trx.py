@@ -14,13 +14,13 @@ class Trx:
 
     def _input_string(self):
 
-        return [f"{str(item)}" for item in self.input]
+        return [f"Input, {str(item)}" for item in self.input]
 
 
     def _output_string(self):
 
-        return [f"{str(item)}" for item in self.output]
+        return [f"Output, {str(item)}" for item in self.output]
         
     def __str__(self):
         
-        return f"{self.input}:{self.output}"
+        return f"{self._input_string()}:{self._output_string()}"
