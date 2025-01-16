@@ -85,7 +85,7 @@ class Node:
                 self.mempool.append(trx_data)
                 print("BROADCASTED TRX VERIFIED")
             else:
-                print("TRX: ", trx_data, "rejeted...")
+                print("TRX: ", str(trx_data), "rejeted...")
 
     def listen_and_verify_block_broadcast(self):
 
@@ -113,20 +113,24 @@ class Node:
         input_sum = 0
         output_sum = 0
         input_utxos = []
-
+        output_utxos = []
         for input in trx.input:
 
             input_utxos.append(input)
             input_sum += input.amount
-
+                                    
         for output in trx.output:
 
+            output_utxos.append(output)
             output_sum += output.amount
 
+        
+
+        IS_NEGATIVE_VALUES = (any(x.amount < 0 for x in output_utxos) or any(x.amount < 0 for x in input_utxos)) # Prevents spending/making negative UTXOs
 
         UTXO_IN_POOL = all(input in self.utxo_pool for input in input_utxos)
 
-        return True if (input_sum == output_sum) and UTXO_IN_POOL else False
+        return True if (input_sum == output_sum) and UTXO_IN_POOL and not IS_NEGATIVE_VALUES else False
             
         
     def valid_trx_in_block(self, block : Block):
