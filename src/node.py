@@ -96,6 +96,19 @@ class Node:
                 print("BROADCASTED BLOCK VERIFIED AND ADDED TO CHAIN")
                 self.blockchain.append(block)
                 self.update_utxos()
+                self.remove_block_trx_from_mempool(block)
+                for trx in self.mempool:
+                    if not self.valid_trx(trx):
+                        self.mempool.remove(trx)
+
+
+    def remove_block_trx_from_mempool(self, block):
+
+        for trx in block.trx:
+            IS_COINBASE_TRX = (trx.input[0].assigned_adr == "COINBASE")
+            if not IS_COINBASE_TRX:
+
+                self.mempool.remove(trx)
 
     def valid_hash(self, block : Block):
 

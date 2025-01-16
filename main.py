@@ -8,8 +8,11 @@ from src.miner import Miner
 
 import time
 
+import copy
+
 from src.trx.utxo import Utxo
 from src.trx.trx import Trx
+
 
 network = Network()
 node = Node(network)
@@ -49,10 +52,18 @@ network.clear_network()
 
 print("\nMining block......")
 
-next_block = Block(node.mempool,      
+next_block_trx = []
+
+for trx in node.mempool:
+
+    next_block_trx.append(trx)
+
+next_block = Block(next_block_trx,      
                    genesis_block.calculate_block_hash(), 
                    miner.mine_block(node.mempool, genesis_block.calculate_block_hash()), 
                    1)
+
+
 
 print("\nBroadcasting block..\n")
 
@@ -61,8 +72,9 @@ node.listen_and_verify_block_broadcast()
 network.clear_network()
 wallet.get_utxos()
 
+
+
 print("\n UTXO in circulation")
 for utxo in node.utxo_pool:
 
     print(utxo.amount, utxo.assigned_adr)
-
