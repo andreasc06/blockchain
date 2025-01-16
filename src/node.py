@@ -42,7 +42,8 @@ class Node:
 
             for output in trx.output:
 
-                self.utxo_pool.append(output)
+                if output.amount != 0:
+                    self.utxo_pool.append(output)
 
   
     def verify_transaction(self, pk : VerifyingKey, trx_data, signature):
